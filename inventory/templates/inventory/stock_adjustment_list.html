@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Stock Items</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General Styling */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 25px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .go-back-btn {
+            background-color: #6c757d;
+        }
+
+        .go-back-btn:hover {
+            background-color: #5a6268;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        td {
+            color: #555;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                font-size: 14px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Low Stock Items</h1>
+        <button id="adjust-stock-btn" class="btn"><i class="fas fa-sync-alt"></i> Adjust Stock</button>
+        <button id="go-back-btn" class="btn go-back-btn"><i class="fas fa-arrow-left"></i> Go Back</button>
+        <table id="low-stock-table">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="low-stock-list"></tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // Authentication token
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            alert('You are not logged in');
+            window.location.href = '/inventory/login'; // Redirect to login if no token
+        }
+
+        // Fetch low stock items
+        axios.get('/inventory/stock-adjustments/', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            const lowStockItems = response.data.low_stock_items; // Assuming API returns this
+            const lowStockList = document.getElementById('low-stock-list');
+            lowStockList.innerHTML = ''; // Clear the table body
+
+            if (lowStockItems.length === 0) {
+                lowStockList.innerHTML = '<tr><td colspan="6">No low-stock items found.</td></tr>';
+            } else {
+                lowStockItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.category}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.unit_price}</td>
+                        <td>${item.description}</td>
+                        <td>
+                            <button class="btn" onclick="deleteStockAdjustment(${item.id})"><i class="fas fa-trash-alt"></i> Delete</button>
+                        </td>
+                    `;
+                    lowStockList.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching low-stock items', error);
+            alert('Failed to fetch low-stock items. Please try again.');
+        });
+
+        // Handle stock adjustment redirect
+        document.getElementById('adjust-stock-btn').addEventListener('click', () => {
+            window.location.href = '/inventory/stock-adjustments/adjust/';
+        });
+
+        // Delete stock adjustment with authentication
+        function deleteStockAdjustment(id) {
+            axios.delete(`/inventory/stock-adjustments/${id}/`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                alert('Stock adjustment deleted');
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error deleting stock adjustment', error);
+                alert('Failed to delete stock adjustment. Please try again.');
+            });
+        }
+
+        // Go back button functionality
+        document.getElementById('go-back-btn').addEventListener('click', () => {
+            window.history.back();
+        });
+    </script>
+</body>
+</html>

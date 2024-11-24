@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Category</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #f8f9fa, #e9ecef);
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 25px 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea {
+            margin-bottom: 20px;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus {
+            border-color: #007BFF;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button[type="submit"] {
+            background: #007BFF;
+            color: white;
+        }
+        button[type="submit"]:hover {
+            background: #0056b3;
+        }
+        .go-back-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .go-back-btn:hover {
+            background: #5a6268;
+        }
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: -15px;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 768px) {
+            .button-group {
+                justify-content: space-between;
+            }
+            button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Category</h1>
+        <div class="button-group">
+            <button class="go-back-btn" id="go-back-btn"><i class="fas fa-arrow-left"></i> Go Back</button>
+        </div>
+        <form id="create-category-form">
+            <label for="name">Category Name</label>
+            <input type="text" id="name" name="name" placeholder="Enter category name" required>
+            <div id="name-error" class="error-message"></div>
+
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="4" placeholder="Enter category description" required></textarea>
+            <div id="description-error" class="error-message"></div>
+
+            <button type="submit"><i class="fas fa-save"></i> Create Category</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const token = localStorage.getItem('jwt_token');
+
+        if (!token) {
+            alert('You are not logged in. Redirecting to login page.');
+            window.location.href = '/inventory/login/';
+        }
+
+        // Configure Axios to include the Authorization header for all requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        const createCategoryForm = document.getElementById('create-category-form');
+        const nameError = document.getElementById('name-error');
+        const descriptionError = document.getElementById('description-error');
+
+        // Clear error messages
+        const clearErrors = () => {
+            nameError.textContent = '';
+            descriptionError.textContent = '';
+        };
+
+        // Handle form submission
+        createCategoryForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            clearErrors();
+
+            const name = document.getElementById('name').value.trim();
+            const description = document.getElementById('description').value.trim();
+
+            if (!name || !description) {
+                if (!name) nameError.textContent = 'Category name is required.';
+                if (!description) descriptionError.textContent = 'Description is required.';
+                return;
+            }
+
+            axios.post('/inventory/categories/', { name, description })
+                .then(() => {
+                    alert('Category created successfully');
+                    window.location.href = '/inventory/admin/categories/';
+                })
+                .catch(error => {
+                    if (error.response && error.response.status === 401) {
+                        alert('Session expired. Please log in again.');
+                        window.location.href = '/inventory/login/';
+                    } else {
+                        console.error('Error creating category', error);
+                        alert('An error occurred while creating the category. Please try again.');
+                    }
+                });
+        });
+
+        // Handle "Go Back" button
+        const goBackBtn = document.getElementById('go-back-btn');
+        goBackBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    </script>
+</body>
+</html>

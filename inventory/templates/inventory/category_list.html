@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #f8f9fa, #e9ecef);
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: center;
+        }
+        table th {
+            background: #007BFF;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        table tr:hover {
+            background: #f1f1f1;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #create-category-btn {
+            background: #007BFF;
+            color: white;
+        }
+        #create-category-btn:hover {
+            background: #0056b3;
+        }
+        .go-back-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .go-back-btn:hover {
+            background: #5a6268;
+        }
+        .actions button {
+            padding: 8px 10px;
+            font-size: 12px;
+            background: #dc3545;
+            color: white;
+            border-radius: 4px;
+        }
+        .actions button:hover {
+            background: #a71d2a;
+        }
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            button {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Categories</h1>
+        <div class="button-group">
+            <button class="go-back-btn" id="go-back-btn"><i class="fas fa-arrow-left"></i> Go Back</button>
+            <button id="create-category-btn"><i class="fas fa-plus"></i> Create Category</button>
+        </div>
+        <table id="category-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="category-list">
+                <tr>
+                    <td colspan="4">Loading categories...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const token = localStorage.getItem('jwt_token');
+
+        if (!token) {
+            alert('You are not logged in. Redirecting to login page.');
+            window.location.href = '/inventory/login/';
+        }
+
+        // Configure Axios to include the Authorization header for all requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch categories
+            axios.get('/inventory/categories/')
+                .then(response => {
+                    const categories = response.data;
+                    const categoryList = document.getElementById('category-list');
+                    categoryList.innerHTML = ''; // Clear placeholder
+                    if (categories.length > 0) {
+                        categories.forEach(category => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${category.id}</td>
+                                <td>${category.name}</td>
+                                <td>${category.description}</td>
+                                <td class="actions">
+                                    <button onclick="deleteCategory(${category.id})"><i class="fas fa-trash-alt"></i> Delete</button>
+                                </td>
+                            `;
+                            categoryList.appendChild(row);
+                        });
+                    } else {
+                        categoryList.innerHTML = '<tr><td colspan="4">No categories found.</td></tr>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching categories', error);
+                    const categoryList = document.getElementById('category-list');
+                    categoryList.innerHTML = '<tr><td colspan="4">Failed to load categories.</td></tr>';
+                    if (error.response && error.response.status === 401) {
+                        alert('Session expired. Please log in again.');
+                        window.location.href = '/inventory/login/';
+                    }
+                });
+
+            // Handle category creation
+            const createCategoryBtn = document.getElementById('create-category-btn');
+            createCategoryBtn.addEventListener('click', () => {
+                window.location.href = '/inventory/categories/create/';
+            });
+
+            // Handle "Go Back" button
+            const goBackBtn = document.getElementById('go-back-btn');
+            goBackBtn.addEventListener('click', () => {
+                window.history.back();
+            });
+        });
+
+        // Delete category
+        function deleteCategory(id) {
+            if (confirm('Are you sure you want to delete this category?')) {
+                axios.delete(`/inventory/categories/${id}/`)
+                    .then(() => {
+                        alert('Category deleted successfully.');
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting category', error);
+                        alert('Failed to delete category.');
+                        if (error.response && error.response.status === 401) {
+                            alert('Session expired. Please log in again.');
+                            window.location.href = '/inventory/login/';
+                        }
+                    });
+            }
+        }
+    </script>
+</body>
+</html>

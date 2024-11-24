@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjust Stock</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General Styling */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 25px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 16px;
+            margin: 8px 0;
+            display: block;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .btn-container button {
+            width: 48%;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        td {
+            color: #555;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 15px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+
+            label, input, select {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Adjust Stock</h1>
+        <form id="adjust-stock-form">
+            <div class="form-group">
+                <label for="item-id">Item:</label>
+                <select id="item-id" required>
+                    <!-- Item options will be populated by JavaScript -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="quantity-change">Quantity Change:</label>
+                <input type="number" id="quantity-change" placeholder="Quantity Change" required>
+            </div>
+
+            <div class="btn-container">
+                <button type="submit"><i class="fas fa-sync-alt"></i> Adjust Stock</button>
+                <button type="button" class="go-back-btn" onclick="window.history.back();"><i class="fas fa-arrow-left"></i> Go Back</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const token = localStorage.getItem('jwt_token');
+const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+let csrfToken = null;
+
+if (csrfMeta) {
+    csrfToken = csrfMeta.getAttribute('content');
+} else {
+    console.error('CSRF token meta tag not found.');
+    // Handle this scenario, e.g., redirect to login or show an error
+}
+
+const headers = {
+    Authorization: `Bearer ${token}`,
+    'X-CSRFToken': csrfToken
+};
+
+// Fetch inventory items
+axios.get('/inventory/inventory-items/', { headers })
+    .then(response => {
+        console.log('Inventory items:', response.data);
+        const itemSelect = document.getElementById('item-id');
+        response.data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.category;
+            option.textContent = item.name;
+            itemSelect.appendChild(option);
+        });
+    })
+    .catch(error => console.error('Error fetching inventory items:', error));
+
+// Handle form submission
+document.getElementById('adjust-stock-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const itemId = document.getElementById('item-id').value;  // Get the item id
+    const quantityChange = document.getElementById('quantity-change').value;
+
+    axios.post('/inventory/stock-adjustments/', {
+        item_id: itemId,  // Send item id
+        quantity: quantityChange,
+    }, { headers })
+        .then(response => {
+            alert('Stock adjusted successfully');
+            window.location.href = '/inventory/admin/stock-adjustments/';
+        })
+        .catch(error => {
+            console.error('Error adjusting stock:', error);
+            alert('Failed to adjust stock. Please try again.');
+        });
+});
+
+    </script>
+</body>
+</html>

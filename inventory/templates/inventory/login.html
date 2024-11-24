@@ -1,0 +1,154 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+    <div class="login-container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+            <p class="error-message" id="error-message"></p>
+            <div class="loader" id="loader" style="display:none;"></div>
+        </form>
+    </div>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .login-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: #f44336;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .loader {
+            margin-top: 15px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Media Query for smaller screens */
+        @media (max-width: 480px) {
+            .login-container {
+                width: 90%;
+                padding: 20px;
+            }
+            h2 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+
+    <script>
+        // Check if token exists and redirect to the dashboard if already logged in
+        window.onload = function() {
+            const token = localStorage.getItem('jwt_token');
+            if (token) {
+                // If the user is already logged in, redirect to the dashboard
+                window.location.href = '/inventory/dashboard/';
+            }
+        };
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent form from reloading the page
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loader = document.getElementById('loader');
+            const errorMessage = document.getElementById('error-message');
+
+            // Show loader
+            loader.style.display = 'inline-block';
+            errorMessage.style.display = 'none';
+
+            // Send credentials to the backend API to get JWT token
+            fetch('http://localhost:8000/api/token/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loader.style.display = 'none'; // Hide loader
+
+                if (data.access) {
+                    localStorage.setItem('jwt_token', data.access);
+                    window.location.href = '/inventory/dashboard/';
+                } else {
+                    errorMessage.textContent = 'Invalid credentials. Please try again.';
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                loader.style.display = 'none'; // Hide loader
+                errorMessage.textContent = 'An error occurred. Please check your network or try again later.';
+                errorMessage.style.display = 'block';
+            });
+        });
+    </script>
+{% endblock %}

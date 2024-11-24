@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #f8f9fa, #e9ecef);
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 20px;
+        }
+        .stats, .management {
+            margin: 20px 0;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1 1 45%;
+            margin: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: scale(1.05);
+        }
+        .stat-card h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .stat-card span {
+            font-size: 24px;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        .management {
+            text-align: center;
+        }
+        .management button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #007BFF;
+            color: #fff;
+            transition: background-color 0.3s ease;
+        }
+        .management button:hover {
+            background: #0056b3;
+        }
+        .go-back-btn {
+            display: inline-block;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        .go-back-btn:hover {
+            background: #5a6268;
+        }
+        .logout-btn {
+            display: inline-block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        @media (max-width: 768px) {
+            .stat-card {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <button class="go-back-btn" id="go-back-btn"><i class="fas fa-arrow-left"></i> Go Back</button>
+        <!-- Add Logout Button -->
+        <button class="logout-btn" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        <div id="dashboard-content">
+            <p>Welcome to the Admin Dashboard.</p>
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Total Categories</h3>
+                    <span id="category-count">0</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Inventory Items</h3>
+                    <span id="inventory-item-count">0</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Stock Adjustments</h3>
+                    <span id="stock-adjustment-count">0</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Low Stock Items (below 10)</h3>
+                    <span id="low-stock-items">0</span>
+                </div>
+            </div>
+            <div class="management">
+                <h2>Manage Inventory</h2>
+                <button onclick="window.location.href='/inventory/admin/categories/'">Manage Categories</button>
+                <button onclick="window.location.href='/inventory/admin/inventory-items/'">Manage Inventory Items</button>
+                <button onclick="window.location.href='/inventory/admin/stock-adjustments/'">Manage Stock Adjustments</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            alert('You are not logged in. Redirecting to login page.');
+            window.location.href = '/inventory/login/';
+        } else {
+            // Configure Axios for authentication
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+            // Fetch dashboard data
+            axios.get('/inventory/api/dashboard-stats/')
+                .then(response => {
+                    const { categories, inventoryItems, stockAdjustments } = response.data;
+                    document.getElementById('category-count').textContent = categories;
+                    document.getElementById('inventory-item-count').textContent = inventoryItems;
+                    document.getElementById('stock-adjustment-count').textContent = stockAdjustments;
+                })
+                .catch(error => {
+                    console.error('Error fetching dashboard data:', error);
+                    if (error.response && error.response.status === 401) {
+                        document.getElementById('dashboard-content').innerHTML = '<p>Unauthorized. Please log in again.</p>';
+                        window.location.href = '/inventory/login/';
+                    } else {
+                        document.getElementById('dashboard-content').innerHTML = '<p>Failed to load dashboard data. Please try again later.</p>';
+                    }
+                });
+        }
+    
+        // Handle "Go Back" button
+        document.getElementById('go-back-btn').addEventListener('click', () => {
+            window.history.back();
+        });
+    
+        // Handle Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            // Remove the JWT token from localStorage
+            localStorage.removeItem('jwt_token');
+            // Redirect to the login page
+            window.location.href = '/inventory/login/';
+        });
+    </script>
+    
+</body>
+</html>

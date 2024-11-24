@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Stock Items</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Low Stock Items</h1>
+        <table id="low-stock-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                </tr>
+            </thead>
+            <tbody id="low-stock-list"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Fetch low stock items
+        axios.get('/api/low-stock-items/')
+            .then(response => {
+                const lowStockItems = response.data;
+                const lowStockList = document.getElementById('low-stock-list');
+                lowStockList.innerHTML = '';  // Clear the table body
+                lowStockItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.category.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.unit_price}</td>
+                    `;
+                    lowStockList.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching low stock items', error));
+    </script>
+</body>
+</html>

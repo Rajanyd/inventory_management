@@ -1,0 +1,12 @@
+version: '3'
+services:
+  web:
+    build: .
+    container_name: django_inventory
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=inventory_management.settings
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]

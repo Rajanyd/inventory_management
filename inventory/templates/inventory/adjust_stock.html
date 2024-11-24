@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjust Stock</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Adjust Stock</h1>
+        <form id="adjust-stock-form">
+            <label for="item">Item</label>
+            <select id="item" name="item" required>
+                <!-- Items will be loaded here -->
+            </select>
+            <label for="quantity_change">Quantity Change</label>
+            <input type="number" id="quantity_change" name="quantity_change" required>
+            <label for="reason">Reason</label>
+            <textarea id="reason" name="reason" required></textarea>
+            <button type="submit">Adjust Stock</button>
+        </form>
+    </div>
+
+    <script>
+        // Fetch inventory items for stock adjustment
+        axios.get('/api/inventory-items/')
+            .then(response => {
+                const items = response.data;
+                const itemSelect = document.getElementById('item');
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = item.name;
+                    itemSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching inventory items', error));
+
+        // Handle form submission for stock adjustment
+        document.getElementById('adjust-stock-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const item = document.getElementById('item').value;
+            const quantityChange = document.getElementById('quantity_change').value;
+            const reason = document.getElementById('reason').value;
+
+            axios.post('/api/stock-adjustments/', {
+                item: item,
+                quantity_change: quantityChange,
+                reason: reason
+            })
+            .then(response => {
+                alert('Stock adjusted successfully');
+                window.location.href = '/stock-adjustments/';
+            })
+            .catch(error => console.error('Error adjusting stock', error));
+        });
+    </script>
+</body>
+</html>
